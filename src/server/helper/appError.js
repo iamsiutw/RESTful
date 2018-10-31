@@ -2,5 +2,5 @@
 import httpStatus from 'http-status';
 
 class ExtenableError extends Error {
-  
+  123
 }
