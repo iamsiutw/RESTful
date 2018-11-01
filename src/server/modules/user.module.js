@@ -3,6 +3,7 @@ import mysql from 'mysql';
 import config from '../../config/config';
 import bcrypt from 'bcrypt';
 import appError from '../helper/appError';
+import jwt from 'jsonwebtoken';
 
 const connectionPool = mysql.createPool({
   connectionLimit: 10,
@@ -120,7 +121,15 @@ const selectUserLogin = (insertValues) => {
             const userPassword = insertValues.user_password; // 使用者登入輸入的密碼
             bcrypt.compare(userPassword, dbHashPassword).then((res) => {
               if (res) {
-                resolve('登入成功');
+                //產生JWT
+                const payload = {
+                  user_id: result[0].user_id,
+                  user_name: result[0].user_name,
+                  user_mail: result[0].user_mail
+                };
+                // 取得API Token
+                const token = jwt.sign({ payload, exp: Math.floor(Date.now() / 1000) + (60 * 15)}, 'my_secret_key');
+                resolve(Object.assign({ code:200 }, {message: '登入成功', token})); //登入成功
               } else {
                 reject(new appError.LoginError2()); //登入失敗 輸入的密碼有誤
               }
