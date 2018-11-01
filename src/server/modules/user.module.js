@@ -111,6 +111,7 @@ const selectUserLogin = (insertValues) => {
         reject(connectionError); // 若連線有問題回傳錯誤
       } else {
         connection.query('select * from user where user_mail = ?', insertValues.user_mail, (error, result) => { // User撈取mail欄位的值組
+        
           if (error) {
             console.error('SQL error: ', error);
             reject(error); // 寫入資料庫有問題時回傳錯誤

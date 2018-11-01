@@ -1,6 +1,7 @@
 // article.module.js
 import mysql from 'mysql';
 import config from '../../config/config';
+import jwt from 'jsonwebtoken';
 
 const connectionPool = mysql.createPool({
   connectionLimit: 10,
@@ -17,7 +18,7 @@ const createArticle = (insertValues) => {
       if (connectionError) {
         reject(connectionError); // 若連線有問題回傳錯誤
       } else {
-        connection.query('INSERT INTO Article SET ?', insertValues, (error, result) => { // Article資料表寫入一筆資料
+        connection.query('insert into article set ?', insertValues, (error, result) => { // Article資料表寫入一筆資料
           if (error) {
             console.error('SQL error: ', error); // 寫入資料庫有問題時回傳錯誤
             reject(error);
@@ -103,9 +104,39 @@ const deleteArticle = (articleId) => {
   });
 };
 
+/* Article GET JWT 取得個人文章 */
+const selectPersonalArticle = (token) => {
+  return new Promise((resolve, reject) => {
+    jwt.verify(token, 'my_secret_key', (err, decoded) => {
+      if (err) {
+        reject(err); // 驗證失敗回傳錯誤
+      } else {
+        // JWT 驗證成功 -> 取得用戶user_id
+        const userId = decoded.payload.user_id;
+        //JWT 驗證成功 -> 取得該user_id的所有文章
+        connectionPool.getConnection((connectionError, connection) => {
+          if (connectionError) {
+            reject(connectionError);
+          } else {
+            connection.query('select * from article where user_id = ?', [userId], (error, result) => {
+              if (error) {
+                reject(error); //有問題回傳錯誤
+              } else {
+                resolve(result); //成功回傳json資料
+              }
+              connection.release();
+            });
+          }
+        });
+      }
+    });
+  });
+};
+
 export default {
   createArticle,
   selectArticle,
   modifyArticle,
-  deleteArticle
+  deleteArticle,
+  selectPersonalArticle
 };
